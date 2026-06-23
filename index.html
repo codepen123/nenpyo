@@ -136,9 +136,9 @@ placeholder="概要">
 </textarea>
 
 <input
-type="file"
+type="text"
 id="eventImage"
-accept="image/*">
+placeholder="画像URL（任意）">
 
 <button onclick="saveEvent()">
 保存
@@ -230,8 +230,8 @@ eventTitle.value;
 const description =
 eventDescription.value;
 
-const imageFile =
-eventImage.files[0];
+const imageUrl =
+eventImage.value.trim();
 
 if(!date || !title){
 alert("入力してください");
