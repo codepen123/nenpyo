@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>歴史年表</title>
+<style>
+body{font-family:sans-serif;background:#f5f5f5;margin:20px}
+h1{text-align:center}
+.toolbar,.formbox{background:#fff;padding:15px;border-radius:10px;margin-bottom:15px}
+input,textarea{width:100%;box-sizing:border-box;padding:8px;margin:5px 0}
+button{padding:8px 12px;margin:3px;cursor:pointer}
+.year-title{background:#333;color:#fff;padding:10px;border-radius:8px;margin-top:20px}
+.event{background:#fff;margin:10px 0;padding:10px;border-left:5px solid #0077ff;border-radius:6px}
+.detail{display:none;margin-top:10px}
+img{max-width:250px;border-radius:6px}
+</style>
+</head>
+<body>
+<h1>歴史年表</h1>
+
+<div class="toolbar">
+<input id="searchBox" placeholder="検索..." oninput="render()">
+
+<label>開始年: <span id="startYearText">0</span></label>
+<input type="range" id="startYear" min="0" max="2100" value="0" oninput="updateSlider()">
+
+<label>終了年: <span id="endYearText">2100</span></label>
+<input type="range" id="endYear" min="0" max="2100" value="2100" oninput="updateSlider()">
+
+<button onclick="toggleForm()">編集</button>
+</div>
+
+<div class="formbox" id="formBox" style="display:none">
+<input type="date" id="eventDate">
+<input type="text" id="eventTitle" placeholder="出来事名">
+<textarea id="eventDescription" placeholder="概要"></textarea>
+<input type="file" id="eventImage" accept="image/*">
+<button onclick="saveEvent()">保存</button>
+</div>
+
+<div id="timeline"></div>
+
+<script>
+let events = JSON.parse(localStorage.getItem("historyEvents")) || [];
+let editingId = null;
+
+function toggleForm(){
+ const box=document.getElementById("formBox");
+ box.style.display=box.style.display==="block"?"none":"block";
+}
+
+function updateSlider(){
+ startYearText.textContent=startYear.value;
+ endYearText.textContent=endYear.value;
+ render();
+}
+
+function saveData(){
+ localStorage.setItem("historyEvents",JSON.stringify(events));
+}
+
+function saveEvent(){
+ const date=eventDate.value;
+ const title=eventTitle.value;
+ const description=eventDescription.value;
+ const file=eventImage.files[0];
+
+ if(!date||!title){alert("入力してください");return;}
+
+ if(file){
+   const reader=new FileReader();
+   reader.onload=()=>saveDataObject(date,title,description,reader.result);
+   reader.readAsDataURL(file);
+ }else{
+   saveDataObject(date,title,description,null);
+ }
+}
+
+function saveDataObject(date,title,description,image){
+ if(editingId){
+   const e=events.find(x=>x.id===editingId);
+   e.date=date;
+   e.title=title;
+   e.description=description;
+   if(image) e.image=image;
+   editingId=null;
+ }else{
+   events.push({
+      id:Date.now(),
+      date,title,description,image
+   });
+ }
+ saveData();
+ render();
+}
+
+function editEvent(id){
+ const e=events.find(x=>x.id===id);
+ editingId=id;
+ eventDate.value=e.date;
+ eventTitle.value=e.title;
+ eventDescription.value=e.description;
+ formBox.style.display="block";
+}
+
+function deleteEvent(id){
+ if(!confirm("削除しますか？")) return;
+ events=events.filter(x=>x.id!==id);
+ saveData();
+ render();
+}
+
+function toggleDetail(id){
+ const d=document.getElementById("detail-"+id);
+ d.style.display=d.style.display==="block"?"none":"block";
+}
+
+function render(){
+ events.sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+ const keyword=searchBox.value.toLowerCase();
+ const start=parseInt(startYear.value);
+ const end=parseInt(endYear.value);
+
+ const filtered=events.filter(e=>{
+   const year=parseInt(e.date.split("-")[0]);
+   return year>=start && year<=end &&
+   ((e.title||"").toLowerCase().includes(keyword) ||
+    (e.description||"").toLowerCase().includes(keyword));
+ });
+
+ const years={};
+ filtered.forEach(e=>{
+   const y=e.date.split("-")[0];
+   if(!years[y]) years[y]=[];
+   years[y].push(e);
+ });
+
+ timeline.innerHTML="";
+
+ Object.keys(years).forEach(y=>{
+   const div=document.createElement("div");
+   div.innerHTML='<div class="year-title">'+y+'年</div>';
+
+   years[y].forEach(e=>{
+     const item=document.createElement("div");
+     item.className="event";
+     item.innerHTML=`
+       <div onclick="toggleDetail(${e.id})" style="cursor:pointer">
+         <b>${e.title}</b><br>${e.date}
+       </div>
+       <div class="detail" id="detail-${e.id}">
+         ${e.image?`<img src="${e.image}"><br>`:""}
+         <p>${e.description||""}</p>
+         <button onclick="editEvent(${e.id})">編集</button>
+         <button onclick="deleteEvent(${e.id})">削除</button>
+       </div>`;
+     div.appendChild(item);
+   });
+
+   timeline.appendChild(div);
+ });
+}
+
+updateSlider();
+render();
+</script>
+</body>
+</html>
