@@ -400,14 +400,10 @@ if(editingId){
 await update(
 ref(
 db,
-`events/${eventId}/comments/${commentId}`
+"events/" + editingId
 ),
-{
-likes:
-current + 1
-}
+data
 );
-
 
 editingId = null;
 
@@ -420,11 +416,6 @@ db,
 "events"
 )
 );
-const noticeRef =
-push(
-ref(db,"notifications")
-);
-
 
 await set(
 newRef,
@@ -432,6 +423,11 @@ data
 );
 
 }
+const noticeRef =
+push(
+ref(db,"notifications")
+);
+
 
 eventDate.value="";
 eventCountry.value="";
@@ -472,12 +468,83 @@ document.getElementById(
 "block";
 
 }
-window.addComment = async function(eventId){
 window.likeComment =
 async function(
 eventId,
 commentId
 ){
+
+const target =
+events.find(
+e=>e.id===eventId
+);
+
+if(
+!target ||
+!target.comments ||
+!target.comments[commentId]
+){
+return;
+}
+
+const current =
+target.comments[commentId]
+.likes || 0;
+
+await update(
+ref(
+db,
+`events/${eventId}/comments/${commentId}`
+),
+{
+likes:
+current + 1
+}
+);
+
+}
+
+window.addComment =
+async function(eventId){
+
+const nickname =
+document.getElementById(
+`nickname-${eventId}`
+).value.trim();
+
+const text =
+document.getElementById(
+`comment-${eventId}`
+).value.trim();
+
+if(!nickname || !text){
+alert("ニックネームとコメントを入力してください");
+return;
+}
+
+const commentRef =
+push(
+ref(
+db,
+`events/${eventId}/comments`
+)
+);
+
+await set(
+commentRef,
+{
+nickname,
+text,
+time:Date.now(),
+likes:0
+}
+);
+
+document.getElementById(
+`comment-${eventId}`
+).value="";
+
+}
 
 const target =
 events.find(
