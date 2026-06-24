@@ -153,7 +153,26 @@ font-size:18px;
 <body>
 
 <h1>歴史年表</h1>
+<div
+id="notificationArea"
+style="
+background:white;
+padding:10px;
+border-radius:10px;
+margin-bottom:15px;
+">
 
+<h3 id="noticeTitle">
+🔔 お知らせ
+</h3>
+
+<div id="notifications">
+
+通知はありません
+
+</div>
+
+</div>
 <a href="https://phototourl.com/jp">画像URL化サイト</a>
 
 
@@ -381,11 +400,14 @@ if(editingId){
 await update(
 ref(
 db,
-"events/" +
-editingId
+`events/${eventId}/comments/${commentId}`
 ),
-data
+{
+likes:
+current + 1
+}
 );
+
 
 editingId = null;
 
@@ -398,7 +420,19 @@ db,
 "events"
 )
 );
+const noticeRef =
+push(
+ref(db,"notifications")
+);
 
+await set(
+noticeRef,
+{
+message:
+"誰かがコメントに👍しました",
+time:Date.now()
+}
+);
 await set(
 newRef,
 data
@@ -480,6 +514,21 @@ commentRef,
 {
 nickname,
 text,
+time:Date.now(),
+likes:0
+}
+);
+
+const noticeRef =
+push(
+ref(db,"notifications")
+);
+
+await set(
+noticeRef,
+{
+message:
+`${nickname} さんがコメントしました`,
 time:Date.now()
 }
 );
@@ -807,7 +856,62 @@ yearDiv
 onValue(
 ref(db,"events"),
 snapshot=>{
+onValue(
+ref(db,"notifications"),
+(snapshot)=>{
 
+let html="";
+
+const notices=[];
+
+snapshot.forEach(child=>{
+
+notices.push(
+child.val()
+);
+
+});
+
+notices.sort(
+(a,b)=>b.time-a.time
+);
+
+notices.slice(0,20)
+.forEach(notice=>{
+
+html += `
+<div
+style="
+padding:8px;
+border-bottom:1px solid #ddd;
+">
+
+${notice.message}
+
+</div>
+`;
+
+});
+
+if(html===""){
+html="通知はありません";
+}
+
+document
+.getElementById(
+"notifications"
+)
+.innerHTML=html;
+
+document
+.getElementById(
+"noticeTitle"
+)
+.innerHTML=
+`🔔 お知らせ (${notices.length})`;
+
+}
+);
 events=[];
 
 snapshot.forEach(
