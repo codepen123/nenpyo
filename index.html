@@ -445,7 +445,50 @@ document.getElementById(
 "block";
 
 }
+window.addComment = async function(eventId){
 
+const nickname =
+document.getElementById(
+`nickname-${eventId}`
+).value.trim();
+
+const text =
+document.getElementById(
+`comment-${eventId}`
+).value.trim();
+
+if(!nickname || !text){
+
+alert(
+"ニックネームとコメントを入力してください"
+);
+
+return;
+
+}
+
+const commentRef =
+push(
+ref(
+db,
+`events/${eventId}/comments`
+)
+);
+
+await set(
+commentRef,
+{
+nickname,
+text,
+time:Date.now()
+}
+);
+
+document.getElementById(
+`comment-${eventId}`
+).value="";
+
+}
 window.deleteEvent = function(id){
 
 const firstConfirm =
@@ -625,7 +668,42 @@ getCountryColor(
 event.country ||
 "未分類"
 );
+let commentsHtml = "";
 
+if(event.comments){
+
+Object.values(
+event.comments
+)
+
+.sort(
+(a,b)=>b.time-a.time
+)
+
+.forEach(comment=>{
+
+commentsHtml += `
+<div style="
+padding:8px;
+margin:5px 0;
+background:#f0f0f0;
+border-radius:8px;
+">
+
+<b>
+${comment.nickname}
+</b>
+
+<br>
+
+${comment.text}
+
+</div>
+`;
+
+});
+
+}
 const eventDiv =
 document.createElement(
 "div"
@@ -673,7 +751,32 @@ ${event.image ?
 <p>
 ${event.description || ""}
 </p>
+<hr>
 
+<h4>コメント</h4>
+
+<div>
+
+${commentsHtml}
+
+</div>
+
+<input
+type="text"
+id="nickname-${event.id}"
+placeholder="ニックネーム">
+
+<textarea
+id="comment-${event.id}"
+placeholder="コメントを書く">
+</textarea>
+
+<button
+onclick="addComment('${event.id}')">
+
+コメント投稿
+
+</button>
 <button
 onclick="editEvent('${event.id}')">
 編集
