@@ -480,7 +480,55 @@ document.getElementById(
 
 }
 window.addComment = async function(eventId){
+window.likeComment =
+async function(
+eventId,
+commentId
+){
 
+const target =
+events.find(
+e=>e.id===eventId
+);
+
+if(
+!target ||
+!target.comments ||
+!target.comments[commentId]
+){
+return;
+}
+
+const current =
+target.comments[commentId]
+.likes || 0;
+
+await update(
+ref(
+db,
+`events/${eventId}/comments/${commentId}`
+),
+{
+likes:
+current + 1
+}
+);
+
+const noticeRef =
+push(
+ref(db,"notifications")
+);
+
+await set(
+noticeRef,
+{
+message:
+"誰かがコメントに👍しました",
+time:Date.now()
+}
+);
+
+}
 const nickname =
 document.getElementById(
 `nickname-${eventId}`
@@ -721,7 +769,7 @@ let commentsHtml = "";
 
 if(event.comments){
 
-Object.values(
+Object.entries(
 event.comments
 )
 
@@ -729,10 +777,12 @@ event.comments
 (a,b)=>b.time-a.time
 )
 
-.forEach(comment=>{
+.forEach(
+([commentId,comment])=>{
 
 commentsHtml += `
-<div style="
+<div
+style="
 padding:8px;
 margin:5px 0;
 background:#f0f0f0;
@@ -746,6 +796,33 @@ ${comment.nickname}
 <br>
 
 ${comment.text}
+
+<br><br>
+
+<button
+onclick="
+likeComment(
+'${event.id}',
+'${commentId}'
+)
+">
+
+👍
+${comment.likes || 0}
+
+</button>
+
+<button
+onclick="
+deleteComment(
+'${event.id}',
+'${commentId}'
+)
+">
+
+🗑️
+
+</button>
 
 </div>
 `;
