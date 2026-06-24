@@ -446,14 +446,40 @@ document.getElementById(
 
 }
 
-window.deleteEvent =
-function(id){
+window.deleteEvent = function(id){
 
-if(
+const firstConfirm =
 confirm(
-"削除しますか？"
-)
-){
+"本当に削除しますか？"
+);
+
+if(!firstConfirm){
+return;
+}
+
+const secondConfirm =
+confirm(
+"この操作は元に戻せません。"
+);
+
+if(!secondConfirm){
+return;
+}
+
+const answer =
+prompt(
+"削除するには YES と入力してください"
+);
+
+if(answer !== "YES"){
+
+alert(
+"入力が違うため削除を中止しました"
+);
+
+return;
+
+}
 
 remove(
 ref(
@@ -461,8 +487,6 @@ db,
 "events/" + id
 )
 );
-
-}
 
 }
 
