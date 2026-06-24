@@ -425,14 +425,7 @@ push(
 ref(db,"notifications")
 );
 
-await set(
-noticeRef,
-{
-message:
-"誰かがコメントに👍しました",
-time:Date.now()
-}
-);
+
 await set(
 newRef,
 data
@@ -519,14 +512,7 @@ push(
 ref(db,"notifications")
 );
 
-await set(
-noticeRef,
-{
-message:
-"誰かがコメントに👍しました",
-time:Date.now()
-}
-);
+
 
 }
 const nickname =
@@ -572,14 +558,7 @@ push(
 ref(db,"notifications")
 );
 
-await set(
-noticeRef,
-{
-message:
-`${nickname} さんがコメントしました`,
-time:Date.now()
-}
-);
+
 
 document.getElementById(
 `comment-${eventId}`
